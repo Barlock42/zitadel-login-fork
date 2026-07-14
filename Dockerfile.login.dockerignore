@@ -1,0 +1,6 @@
+.git
+.nx
+**/node_modules
+**/.next
+**/dist
+*.log

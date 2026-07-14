@@ -1,0 +1,88 @@
+package initialise
+
+import (
+	"database/sql"
+	"database/sql/driver"
+	"errors"
+	"testing"
+)
+
+func Test_verifyDB(t *testing.T) {
+	err := ReadStmts()
+	if err != nil {
+		t.Errorf("unable to read stmts: %v", err)
+		t.FailNow()
+	}
+
+	type args struct {
+		db       db
+		database string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		targetErr error
+	}{
+		{
+			name: "doesn't exists, create fails",
+			args: args{
+				db: prepareDB(t,
+					expectQuery("SELECT current_database()", nil, []string{"current_database"}, [][]driver.Value{
+						{"postgres"},
+					}),
+					expectExec("-- replace zitadel with the name of the database\nCREATE DATABASE \"zitadel\"", sql.ErrTxDone),
+				),
+				database: "zitadel",
+			},
+			targetErr: sql.ErrTxDone,
+		},
+		{
+			name: "doesn't exists, create successful",
+			args: args{
+				db: prepareDB(t,
+					expectQuery("SELECT current_database()", nil, []string{"current_database"}, [][]driver.Value{
+						{"postgres"},
+					}),
+					expectExec("-- replace zitadel with the name of the database\nCREATE DATABASE \"zitadel\"", nil),
+				),
+				database: "zitadel",
+			},
+			targetErr: nil,
+		},
+		{
+			name: "already exists",
+			args: args{
+				db: prepareDB(t,
+					expectQuery("SELECT current_database()", nil, []string{"current_database"}, [][]driver.Value{
+						{"postgres"},
+					}),
+					expectExec("-- replace zitadel with the name of the database\nCREATE DATABASE \"zitadel\"", nil),
+				),
+				database: "zitadel",
+			},
+			targetErr: nil,
+		},
+		{
+			name: "same database, skip creation",
+			args: args{
+				db: prepareDB(t,
+					expectQuery("SELECT current_database()", nil, []string{"current_database"}, [][]driver.Value{
+						{"zitadel"},
+					}),
+				),
+				database: "zitadel",
+			},
+			targetErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := VerifyDatabase(tt.args.database)(t.Context(), tt.args.db.db); !errors.Is(err, tt.targetErr) {
+				t.Errorf("verifyDB() error = %v, want: %v", err, tt.targetErr)
+			}
+			if err := tt.args.db.mock.ExpectationsWereMet(); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}
