@@ -4,6 +4,7 @@ import { timestampDate, timestampFromMs } from "@zitadel/client";
 import { cookies } from "next/headers";
 import { LANGUAGE_COOKIE_NAME } from "./i18n";
 import { createLogger } from "./logger";
+import { loginCookieName, loginCookiePath } from "./login-cookies";
 
 const logger = createLogger("cookies");
 
@@ -38,10 +39,10 @@ async function setSessionHttpOnlyCookie<T>(sessions: SessionCookie<T>[], iFrameE
   }
 
   return cookiesList.set({
-    name: "sessions",
+    name: loginCookieName("sessions"),
     value: JSON.stringify(sessions),
     httpOnly: true,
-    path: "/",
+    path: loginCookiePath(),
     sameSite: resolvedSameSite,
     secure: process.env.NODE_ENV === "production",
   });
@@ -54,7 +55,7 @@ export async function setLanguageCookie(language: string) {
     name: LANGUAGE_COOKIE_NAME,
     value: language,
     httpOnly: true,
-    path: "/",
+    path: loginCookiePath(),
   });
 }
 
@@ -74,7 +75,7 @@ export async function addSessionToCookie<T>({
   iFrameEnabled?: boolean;
 }): Promise<any> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   let currentSessions: SessionCookie<T>[] = stringifiedCookie?.value ? JSON.parse(stringifiedCookie?.value) : [];
 
@@ -118,7 +119,7 @@ export async function updateSessionCookie<T>({
   iFrameEnabled?: boolean;
 }): Promise<any> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   const sessions: SessionCookie<T>[] = stringifiedCookie?.value ? JSON.parse(stringifiedCookie?.value) : [session];
 
@@ -150,7 +151,7 @@ export async function removeSessionFromCookie<T>({
   iFrameEnabled?: boolean;
 }) {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   const sessions: SessionCookie<T>[] = stringifiedCookie?.value ? JSON.parse(stringifiedCookie?.value) : [session];
 
@@ -168,7 +169,7 @@ export async function removeSessionFromCookie<T>({
 
 export async function getMostRecentSessionCookie<T>(): Promise<Cookie | undefined> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   if (stringifiedCookie?.value) {
     const sessions: SessionCookie<T>[] = JSON.parse(stringifiedCookie?.value);
@@ -191,7 +192,7 @@ export async function getSessionCookieById<T>({
   organization?: string;
 }): Promise<SessionCookie<T> | undefined> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   if (stringifiedCookie?.value) {
     const sessions: SessionCookie<T>[] = JSON.parse(stringifiedCookie?.value);
@@ -217,7 +218,7 @@ export async function getSessionCookieByLoginName<T>({
   organization?: string;
 }): Promise<SessionCookie<T> | undefined> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   if (!stringifiedCookie?.value) {
     return undefined;
@@ -236,7 +237,7 @@ export async function getSessionCookieByLoginName<T>({
  */
 export async function getAllSessionCookieIds<T>(cleanup: boolean = false): Promise<string[]> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   if (!stringifiedCookie?.value) {
     return [];
@@ -263,7 +264,7 @@ export async function getAllSessionCookieIds<T>(cleanup: boolean = false): Promi
  */
 export async function getAllSessions<T>(cleanup: boolean = false): Promise<SessionCookie<T>[]> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   if (!stringifiedCookie?.value) {
     logger.info("getAllSessions: No session cookie found, returning empty array");
@@ -296,7 +297,7 @@ export async function getMostRecentCookieWithLoginname<T>({
   organization?: string;
 }): Promise<any> {
   const cookiesList = await cookies();
-  const stringifiedCookie = cookiesList.get("sessions");
+  const stringifiedCookie = cookiesList.get(loginCookieName("sessions"));
 
   if (!stringifiedCookie?.value) {
     return undefined;

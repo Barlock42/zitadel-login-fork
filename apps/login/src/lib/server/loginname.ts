@@ -41,6 +41,12 @@ export type SendLoginnameCommand = {
 const ORG_SUFFIX_REGEX = /(?<=@)(.+)/;
 
 export async function sendLoginname(command: SendLoginnameCommand) {
+  if (process.env.CONSILIUM_PASSKEY_ONBOARDING === "true") {
+    const organization = process.env.CONSILIUM_ORGANIZATION_ID;
+    if (!organization || (command.organization && command.organization !== organization))
+      return { error: "Этот вход предназначен для тестового портала." };
+    command = { ...command, organization };
+  }
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
@@ -342,13 +348,14 @@ export async function sendLoginname(command: SendLoginnameCommand) {
       // If the user's email is not verified, they likely already have a code from the
       // initial verification email. Auto-sending a new one here invalidates their existing code
       // and causes confusion. Only auto-send (`send=true`) if the email is already verified.
-      const shouldSend = humanUser?.email?.isVerified === true;
+      const shouldSend = process.env.CONSILIUM_PASSKEY_ONBOARDING !== "true" && humanUser?.email?.isVerified === true;
 
       const params = new URLSearchParams({
         loginName: (session?.factors?.user?.loginName ?? user.preferredLoginName) as string,
         send: shouldSend ? "true" : "false",
         invite: "true", // always send invite code if user has no primary auth method
       });
+      if (process.env.CONSILIUM_PASSKEY_ONBOARDING === "true") params.set("userId", userId);
 
       if (command.requestId) {
         params.append("requestId", command.requestId);
@@ -443,7 +450,7 @@ export async function sendLoginname(command: SendLoginnameCommand) {
       if (
         methods.authMethodTypes.includes(AuthenticationMethodType.PASSKEY) &&
         userLoginSettings?.passkeysType !== PasskeysType.NOT_ALLOWED &&
-        userLoginSettings?.allowLocalAuthentication
+        (userLoginSettings?.allowLocalAuthentication || process.env.CONSILIUM_PASSKEY_ONBOARDING === "true")
       ) {
         const passkeyParams = new URLSearchParams({
           loginName: command.ignoreUnknownUsernames

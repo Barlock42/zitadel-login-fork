@@ -14,7 +14,7 @@ import { headers } from "next/headers";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("passkey");
-  return { title: t("set.title") };
+  return { title: t("set.title"), referrer: "no-referrer" };
 }
 
 export default async function Page(props: { searchParams: Promise<Record<string | number | symbol, string | undefined>> }) {
@@ -102,6 +102,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
 
         {(session?.id || userId) && (
           <RegisterPasskey
+            autoSubmit={process.env.CONSILIUM_PASSKEY_ONBOARDING !== "true"}
             sessionId={session?.id}
             userId={userId}
             isPrompt={!!prompt}

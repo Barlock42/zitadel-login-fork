@@ -21,6 +21,7 @@ import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { userAgent } from "next/server";
 import { completeFlowOrGetUrl } from "../client";
+import { assertConsiliumUserScope } from "../consilium-scope";
 import { getSessionCookieById } from "../cookies";
 import { getServiceConfig } from "../service-url";
 import { checkEmailVerification, checkUserVerification } from "../verify-helper";
@@ -91,6 +92,7 @@ export async function registerPasskeyLink(
     }
 
     currentUserId = session.session.factors.user.id;
+    await assertConsiliumUserScope(serviceConfig, currentUserId);
 
     const sessionValid = isSessionValid(session.session);
 
@@ -130,6 +132,7 @@ export async function registerPasskeyLink(
     }
   } else if (command.userId && command.code && command.codeId) {
     currentUserId = command.userId;
+    await assertConsiliumUserScope(serviceConfig, currentUserId);
     registerCode = {
       id: command.codeId,
       code: command.code,
@@ -236,6 +239,7 @@ export async function verifyPasskeyRegistration(command: VerifyPasskeyCommand) {
     loginName = userResponse.user.preferredLoginName;
   }
 
+  await assertConsiliumUserScope(serviceConfig, currentUserId);
   const response = await zitadelVerifyPasskeyRegistration({
     serviceConfig,
     request: create(VerifyPasskeyRegistrationRequestSchema, {

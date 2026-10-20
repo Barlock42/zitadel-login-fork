@@ -9,10 +9,15 @@ WORKDIR /repo
 COPY . .
 RUN pnpm install --frozen-lockfile
 # NEXT_PUBLIC_* is inlined at build time; base path must be set here.
-ENV NEXT_PUBLIC_BASE_PATH=/ui/v2/login
+ARG LOGIN_BASE_PATH=/ui/v2/login
+ARG CONSILIUM_PORTAL_URL=https://app.consiliumalterum.ru
+ENV NEXT_PUBLIC_BASE_PATH=${LOGIN_BASE_PATH}
+ENV NEXT_PUBLIC_CONSILIUM_PORTAL_URL=${CONSILIUM_PORTAL_URL}
 RUN pnpm nx run @zitadel/login:build
 
 FROM node:24-alpine AS runtime
+ARG LOGIN_BASE_PATH=/ui/v2/login
+ENV NEXT_PUBLIC_BASE_PATH=${LOGIN_BASE_PATH}
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
@@ -31,5 +36,5 @@ ENV HOSTNAME="::" \
     OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD ["/usr/local/bin/node", "/app/healthcheck.mjs", "/ui/v2/login/ready"]
+    CMD ["/usr/local/bin/node", "/app/healthcheck.mjs"]
 ENTRYPOINT ["/app/entrypoint.sh", "node", "apps/login/server.js"]

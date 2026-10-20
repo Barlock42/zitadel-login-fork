@@ -22,6 +22,7 @@ type Props = {
   code?: string;
   codeId?: string;
   loginName?: string;
+  autoSubmit?: boolean;
 };
 
 export function RegisterPasskey({
@@ -33,6 +34,7 @@ export function RegisterPasskey({
   code,
   codeId,
   loginName: initialLoginName,
+  autoSubmit = true,
 }: Props) {
   const { handleSubmit, formState } = useForm<Inputs>({
     mode: "onChange",
@@ -199,10 +201,10 @@ export function RegisterPasskey({
 
   // Auto-submit when code is provided (similar to VerifyForm)
   useEffect(() => {
-    if (code) {
+    if (code && autoSubmit) {
       submitRegisterAndContinue();
     }
-  }, [code, submitRegisterAndContinue]);
+  }, [code, autoSubmit, submitRegisterAndContinue]);
 
   return (
     <form className="w-full">
