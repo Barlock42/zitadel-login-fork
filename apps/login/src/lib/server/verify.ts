@@ -13,6 +13,9 @@ import {
   sendEmailCode as zitadelSendEmailCode,
 } from "@/lib/zitadel";
 import crypto from "crypto";
+import { assertConsiliumUserScope } from "../consilium-scope";
+import { loginCookieName, loginCookiePath } from "../login-cookies";
+import { createVerificationProof } from "../verification-proof";
 
 import { create } from "@zitadel/client";
 import { Session } from "@zitadel/proto/zitadel/session/v2/session_pb";
@@ -63,6 +66,7 @@ export async function sendVerification(command: VerifyUserByEmailCommand) {
   const t = await getTranslations("verify");
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
+  await assertConsiliumUserScope(serviceConfig, command.userId);
 
   const verifyResponse = command.isInvite
     ? await verifyInviteCode({ serviceConfig, userId: command.userId, verificationCode: command.code }).catch((error) => {
@@ -164,13 +168,18 @@ export async function sendVerification(command: VerifyUserByEmailCommand) {
     const cookiesList = await cookies();
     const userAgentId = await getOrSetFingerprintId();
 
-    const verificationCheck = crypto.createHash("sha256").update(`${user.userId}:${userAgentId}`).digest("hex");
+    const verificationCheck =
+      process.env.CONSILIUM_PASSKEY_ONBOARDING === "true"
+        ? createVerificationProof(user.userId, userAgentId, process.env.LOGIN_VERIFICATION_SECRET ?? "")
+        : crypto.createHash("sha256").update(`${user.userId}:${userAgentId}`).digest("hex");
 
     await cookiesList.set({
-      name: "verificationCheck",
+      name: loginCookieName("verificationCheck"),
       value: verificationCheck,
       httpOnly: true,
-      path: "/",
+      path: loginCookiePath(),
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       maxAge: 300, // 5 minutes
     });
 
@@ -269,6 +278,7 @@ export async function resendVerification(command: resendVerifyEmailCommand) {
   const t = await getTranslations("verify");
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
+  await assertConsiliumUserScope(serviceConfig, command.userId);
   const hostWithProtocol = await getPublicHostWithProtocol(_headers);
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -300,6 +310,7 @@ type SendEmailCommand = {
 export async function sendEmailCode(command: SendEmailCommand) {
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
+  await assertConsiliumUserScope(serviceConfig, command.userId);
 
   return zitadelSendEmailCode({ serviceConfig, userId: command.userId, urlTemplate: command.urlTemplate });
 }
@@ -307,6 +318,7 @@ export async function sendEmailCode(command: SendEmailCommand) {
 export async function sendInviteEmailCode(command: SendEmailCommand) {
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
+  await assertConsiliumUserScope(serviceConfig, command.userId);
 
   return createInviteCode({ serviceConfig, userId: command.userId, urlTemplate: command.urlTemplate });
 }
@@ -320,6 +332,7 @@ type InitialSendVerificationCommand = {
 export async function initialSendVerification(command: InitialSendVerificationCommand) {
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
+  await assertConsiliumUserScope(serviceConfig, command.userId);
   const hostWithProtocol = await getPublicHostWithProtocol(_headers);
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";

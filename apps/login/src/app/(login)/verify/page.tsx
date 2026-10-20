@@ -1,4 +1,5 @@
 import { Alert } from "@/components/alert";
+import { ConsiliumInvite } from "@/components/consilium-invite";
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { Translated } from "@/components/translated";
 import { UserAvatar } from "@/components/user-avatar";
@@ -15,13 +16,23 @@ import { headers } from "next/headers";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("verify");
-  return { title: t("verify.title") };
+  return { title: t("verify.title"), referrer: "no-referrer" };
 }
 
 export default async function Page(props: { searchParams: Promise<any> }) {
   const searchParams = await props.searchParams;
 
   const { userId, loginName, code, organization, requestId, invite, send } = searchParams;
+
+  if (process.env.CONSILIUM_PASSKEY_ONBOARDING === "true" && invite === "true") {
+    const { serviceConfig } = getServiceConfig(await headers());
+    const branding = await getBrandingSettings({ serviceConfig, organization: process.env.CONSILIUM_ORGANIZATION_ID });
+    return (
+      <DynamicTheme branding={branding}>
+        <ConsiliumInvite userId={userId ?? ""} organization={organization ?? ""} code={code} requestId={requestId} />
+      </DynamicTheme>
+    );
+  }
 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);

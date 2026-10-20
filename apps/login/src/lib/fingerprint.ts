@@ -3,6 +3,7 @@ import { UserAgent, UserAgentSchema } from "@zitadel/proto/zitadel/session/v2/se
 import { cookies, headers } from "next/headers";
 import { userAgent } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+import { loginCookieName, loginCookiePath } from "./login-cookies";
 
 export async function getFingerprintId() {
   return uuidv4();
@@ -12,17 +13,19 @@ export async function setFingerprintIdCookie(fingerprintId: string) {
   const cookiesList = await cookies();
 
   return cookiesList.set({
-    name: "fingerprintId",
+    name: loginCookieName("fingerprintId"),
     value: fingerprintId,
     httpOnly: true,
-    path: "/",
+    path: loginCookiePath(),
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     maxAge: 31536000, // 1 year
   });
 }
 
 export async function getFingerprintIdCookie() {
   const cookiesList = await cookies();
-  return cookiesList.get("fingerprintId");
+  return cookiesList.get(loginCookieName("fingerprintId"));
 }
 
 export async function getOrSetFingerprintId(): Promise<string> {

@@ -8,6 +8,8 @@ import crypto from "crypto";
 import moment from "moment";
 import { cookies } from "next/headers";
 import { getFingerprintIdCookie } from "./fingerprint";
+import { loginCookieName } from "./login-cookies";
+import { verifyVerificationProof } from "./verification-proof";
 import { getUserByID, ServiceConfig } from "./zitadel";
 
 export function checkPasswordChangeRequired(
@@ -276,15 +278,24 @@ export async function checkUserVerification(userId: string): Promise<boolean> {
 
   const verificationCheck = crypto.createHash("sha256").update(`${userId}:${fingerPrintCookie.value}`).digest("hex");
 
-  const cookieValue = await cookiesList.get("verificationCheck")?.value;
+  const cookieValue = await cookiesList.get(loginCookieName("verificationCheck"))?.value;
 
   if (!cookieValue) {
     console.warn("User verification check cookie not found. User verification check failed.");
     return false;
   }
 
+  if (process.env.CONSILIUM_PASSKEY_ONBOARDING === "true") {
+    return verifyVerificationProof(
+      cookieValue,
+      userId,
+      fingerPrintCookie.value,
+      process.env.LOGIN_VERIFICATION_SECRET ?? "",
+    );
+  }
+
   if (cookieValue !== verificationCheck) {
-    console.warn(`User verification check failed. Expected ${verificationCheck} but got ${cookieValue}`);
+    console.warn("User verification check failed");
     return false;
   }
 
