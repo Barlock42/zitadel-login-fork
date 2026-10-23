@@ -26,6 +26,9 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
   const [now, setNow] = useState(Date.now());
   const [samlData, setSamlData] = useState<{ url: string; fields: Record<string, string> } | null>(null);
   const finished = useRef(false);
+  const actionInFlight = useRef(false);
+  const pollInFlight = useRef(false);
+  const generation = useRef(0);
 
   useEffect(() => {
     if (link) window.history.replaceState(null, "", window.location.pathname);
@@ -36,6 +39,7 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
         | Awaited<ReturnType<typeof checkConsiliumRegistration>>
         | Awaited<ReturnType<typeof confirmConsiliumRegistrationLink>>,
     ) => {
+      if (finished.current) return;
       if ("error" in result) {
         setError(result.error ?? "Не удалось подтвердить почту.");
         return;
@@ -58,10 +62,18 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
   useEffect(() => {
     if (link || verified) return;
     const timer = window.setInterval(() => {
-      if (!finished.current && document.visibilityState === "visible")
+      if (!finished.current && !actionInFlight.current && !pollInFlight.current && document.visibilityState === "visible") {
+        pollInFlight.current = true;
+        const started = generation.current;
         void checkConsiliumRegistration()
-          .then(consume)
-          .catch(() => undefined);
+          .then((result) => {
+            if (started === generation.current) consume(result);
+          })
+          .catch(() => undefined)
+          .finally(() => {
+            pollInFlight.current = false;
+          });
+      }
     }, 3000);
     return () => window.clearInterval(timer);
   }, [link, verified, consume]);
@@ -70,7 +82,9 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
     return () => window.clearInterval(timer);
   }, []);
   async function verify() {
-    if (busy) return;
+    if (actionInFlight.current || finished.current) return;
+    actionInFlight.current = true;
+    generation.current++;
     setBusy(true);
     setError("");
     try {
@@ -78,10 +92,14 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
     } catch {
       setError("Не удалось проверить подтверждение. Попробуйте ещё раз.");
     } finally {
+      actionInFlight.current = false;
       setBusy(false);
     }
   }
   async function resend() {
+    if (actionInFlight.current || finished.current) return;
+    actionInFlight.current = true;
+    generation.current++;
     setBusy(true);
     setError("");
     try {
@@ -91,6 +109,7 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
     } catch {
       setError("Не удалось отправить письмо. Попробуйте позже.");
     } finally {
+      actionInFlight.current = false;
       setBusy(false);
     }
   }
