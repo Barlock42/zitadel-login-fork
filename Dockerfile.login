@@ -24,6 +24,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 RUN mkdir -p /.env-file && touch /.env-file/.env && chown -R nextjs:nodejs /.env-file
 
 COPY --from=builder --chown=nextjs:nodejs /repo/apps/login/.next/standalone ./
+# Next standalone serves public assets relative to the app server directory.
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/login/public ./apps/login/public
 
 USER nextjs
 ENV HOSTNAME="::" \
