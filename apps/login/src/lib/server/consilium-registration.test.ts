@@ -87,6 +87,11 @@ describe("Consilium registration proof boundary", () => {
     expect(m.fetch.mock.calls[1][0]).toContain("/complete");
     expect(m.remove).toHaveBeenCalled();
   });
+  it("waits while another tab is exchanging the same registration proof", async () => {
+    m.fetch.mockResolvedValue(reply({ ...active, active: false, userId: undefined, signingIn: true }));
+    expect(await checkConsiliumRegistration()).toEqual({ waiting: true });
+    expect(createSessionAndUpdateCookie).not.toHaveBeenCalled();
+  });
   it("refuses an existing account ID or an unverified identity", async () => {
     m.fetch.mockResolvedValueOnce(reply({ ...active, userId: "existing-user" }));
     expect(await checkConsiliumRegistration("123456")).toHaveProperty("error");

@@ -20,6 +20,7 @@ type Result = {
   verified: boolean;
   active: boolean;
   userId?: string;
+  signingIn?: boolean;
   error?: string;
   code?: string;
 };
@@ -116,7 +117,7 @@ export async function submitConsiliumRegistration(form: FormData, requestId?: st
 
 async function finish(result: Result, flow: Flow) {
   if (result.error) return { error: result.error };
-  if (!result.verified) return { waiting: true as const };
+  if (!result.verified || result.signingIn) return { waiting: true as const };
   if (!result.active || !result.userId) return { verified: true as const, pending: true as const };
 
   // Only the original browser, a confirmed new registration and a newly provisioned doctor reach here.
