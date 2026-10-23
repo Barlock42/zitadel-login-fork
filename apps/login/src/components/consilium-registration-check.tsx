@@ -8,7 +8,7 @@ import {
 } from "@/lib/server/consilium-registration";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "./alert";
+import { Alert, AlertType } from "./alert";
 import { AutoSubmitForm } from "./auto-submit-form";
 import { Button, ButtonVariants } from "./button";
 import { TextInput } from "./input";
@@ -18,6 +18,7 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [verified, setVerified] = useState(false);
   const [otherDevice, setOtherDevice] = useState(false);
@@ -40,6 +41,10 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
         return;
       }
       if ("waiting" in result) return;
+      if ("needsCode" in result) {
+        setNotice("Почта подтверждена. Введите код из письма, чтобы войти на этом устройстве.");
+        return;
+      }
       finished.current = true;
       if ("verified" in result) {
         setVerified(true);
@@ -95,7 +100,7 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
         <h2>Почта подтверждена</h2>
         <p>
           {otherDevice
-            ? "Вернитесь на исходное устройство — страница регистрации продолжит сама."
+            ? "Вернитесь на устройство, где начали регистрацию."
             : "Ваша заявка на проверке. После одобрения мы отправим письмо для входа в Consilium."}
         </p>
       </div>
@@ -132,6 +137,7 @@ export function ConsiliumRegistrationCheck({ email, link }: Props) {
             data-testid="registration-code"
           />
         )}
+        {notice && <Alert type={AlertType.INFO}>{notice}</Alert>}
         {error && <Alert>{error}</Alert>}
         <Button
           type="submit"
