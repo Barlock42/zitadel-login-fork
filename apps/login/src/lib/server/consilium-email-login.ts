@@ -43,7 +43,10 @@ async function currentSession(sessionId: string) {
   const { serviceConfig } = getServiceConfig(await headers());
   const cookie = await getSessionCookieById({ sessionId });
   if (!cookie) return undefined;
-  const { session } = await getSession({ serviceConfig, sessionId: cookie.id, sessionToken: cookie.token });
+  // ZITADEL rotates the token on every session change; a stale cookie means the login has to start again.
+  const session = await getSession({ serviceConfig, sessionId: cookie.id, sessionToken: cookie.token })
+    .then((response) => response.session)
+    .catch(() => undefined);
   const userId = session?.factors?.user?.id;
   if (!session || !userId) return undefined;
   await assertConsiliumUserScope(serviceConfig, userId);

@@ -13,6 +13,7 @@ import { getBrandingSettings, getLoginSettings, getSession } from "@/lib/zitadel
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
+import Link from "next/link";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("otp");
@@ -51,11 +52,13 @@ export default async function Page(props: {
       return undefined;
     }
 
-    return getSession({ serviceConfig, sessionId: recent.id, sessionToken: recent.token }).then((response) => {
-      if (response?.session) {
-        return response.session;
-      }
-    });
+    return getSession({ serviceConfig, sessionId: recent.id, sessionToken: recent.token })
+      .then((response) => {
+        if (response?.session) {
+          return response.session;
+        }
+      })
+      .catch(() => undefined); // the token was rotated by a request whose response never reached this browser
   }
 
   // email links do not come with organization, thus we need to use the session's organization
@@ -70,6 +73,9 @@ export default async function Page(props: {
   });
 
   if (consiliumEmailLoginEnabled() && method === "email") {
+    const restartParams = new URLSearchParams({ loginName: loginName ?? "", submit: "true" });
+    if (requestId) restartParams.set("requestId", requestId);
+    if (organization) restartParams.set("organization", organization);
     return (
       <DynamicTheme branding={branding}>
         <div className="flex flex-col space-y-4">
@@ -92,7 +98,10 @@ export default async function Page(props: {
               organization={organization ?? session.factors?.user?.organizationId}
             />
           ) : (
-            <Alert>Сеанс входа устарел. Введите почту ещё раз.</Alert>
+            <div className="flex flex-col gap-4">
+              <Alert>Сеанс входа устарел. Запросите новый код.</Alert>
+              <Link href={`/loginname?${restartParams}`}>Получить новый код</Link>
+            </div>
           )}
         </div>
       </DynamicTheme>
