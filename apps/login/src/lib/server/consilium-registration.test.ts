@@ -2,7 +2,13 @@ import { assertConsiliumUserScope } from "@/lib/consilium-scope";
 import { getUserByID } from "@/lib/zitadel";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { verifyConsiliumEmailCode } from "./consilium-email-login";
-import { checkConsiliumRegistration, confirmConsiliumRegistrationLink, registrationEmail } from "./consilium-registration";
+import {
+  checkConsiliumRegistration,
+  checkConsiliumRegistrationEmail,
+  confirmConsiliumRegistrationLink,
+  registrationEmail,
+  submitConsiliumRegistration,
+} from "./consilium-registration";
 import { createSessionAndUpdateCookie } from "./cookie";
 
 const m = vi.hoisted(() => ({ cookie: "", fetch: vi.fn(), set: vi.fn(), remove: vi.fn() }));
@@ -46,6 +52,24 @@ describe("Consilium registration proof boundary", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+  });
+  it("checks duplicates without creating state, sessions or delivery", async () => {
+    m.fetch.mockResolvedValue(reply({ error: "Вы уже зарегистрированы.", code: "already_registered" }, 409));
+    expect(await checkConsiliumRegistrationEmail(flow.email)).toMatchObject({ code: "already_registered" });
+    expect(m.fetch.mock.calls[0][0]).toMatch(/\/check-email$/);
+    expect(m.set).not.toHaveBeenCalled();
+    expect(createSessionAndUpdateCookie).not.toHaveBeenCalled();
+  });
+  it("forwards additional specialties while dropping unknown fields", async () => {
+    m.fetch.mockResolvedValue(reply({ id: 42, email: flow.email }));
+    const data = new FormData();
+    data.set("Email", flow.email);
+    data.append("AdditionalSpecialties", "Кардиолог");
+    data.set("role", "admin");
+    await submitConsiliumRegistration(data);
+    const sent = m.fetch.mock.calls[0][1].body as FormData;
+    expect(sent.getAll("AdditionalSpecialties")).toEqual(["Кардиолог"]);
+    expect(sent.has("role")).toBe(false);
   });
   it("keeps registration disabled without the explicit canary flag", async () => {
     vi.stubEnv("CONSILIUM_REGISTRATION", "false");

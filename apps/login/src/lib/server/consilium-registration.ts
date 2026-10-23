@@ -84,6 +84,13 @@ async function backend(action: string, body: FormData | object): Promise<Result>
   return result;
 }
 
+export async function checkConsiliumRegistrationEmail(email: string) {
+  guard();
+  const flow = await readFlow();
+  const result = await backend("check-email", { email, browserSecret: flow?.browserSecret });
+  return result.error ? { error: result.error, code: result.code } : { available: true as const };
+}
+
 export async function submitConsiliumRegistration(form: FormData, requestId?: string) {
   guard();
   const file = form.get("document");
@@ -106,6 +113,12 @@ export async function submitConsiliumRegistration(form: FormData, requestId?: st
     const value = form.get(key);
     if (typeof value === "string") clean.set(key, value);
   }
+  const additional = form
+    .getAll("AdditionalSpecialties")
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  if (additional.length > 3 || additional.some((value) => value.length > 100))
+    return { error: "Укажите не более трёх дополнительных специализаций." };
+  for (const value of additional) clean.append("AdditionalSpecialties", value.trim());
   if (file instanceof File && file.size > 0) clean.set("document", file);
   const attribution = registrationAttribution(Object.fromEntries(form.entries()));
   for (const [key, value] of Object.entries(attribution)) clean.set(key, value);

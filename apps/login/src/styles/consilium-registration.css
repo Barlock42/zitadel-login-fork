@@ -1,0 +1,562 @@
+/* Consilium Tilda forms, ported to React on 2026-10-23. No Tilda scripts, form storage or trackers. */
+.consilium-site {
+  margin: 0;
+  background: #06253e;
+  color: #06253e;
+  font-family: var(--consilium-sans), Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  color-scheme: light;
+}
+.consilium-site *,
+.consilium-site *::before,
+.consilium-site *::after {
+  box-sizing: border-box;
+}
+.consilium-site a {
+  color: inherit;
+}
+.consilium-site button,
+.consilium-site input,
+.consilium-site select {
+  font: inherit;
+}
+.consilium-site button,
+.consilium-site a,
+.consilium-site summary,
+.consilium-site select {
+  -webkit-tap-highlight-color: transparent;
+}
+.consilium-site :focus-visible {
+  outline: 2px solid #2987d4;
+  outline-offset: 5px;
+}
+.consilium-header {
+  width: min(1200px, calc(100% - 64px));
+  height: 90px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  color: #fff;
+}
+.consilium-header img {
+  display: block;
+  width: 204px;
+  height: auto;
+}
+.consilium-header nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.consilium-login-button {
+  border: 1px solid #8caebd;
+  border-radius: 50px;
+  min-width: 110px;
+  text-align: center;
+  padding: 7px 24px;
+  font-size: 18px;
+  text-decoration: none;
+}
+.consilium-site .consilium-button,
+.consilium-status button[type="submit"] {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: 0;
+  border-radius: 50px;
+  min-height: 54px;
+  padding: 12px 40px;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  background: linear-gradient(#2987d4, #529fda);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+.consilium-site .consilium-button:hover,
+.consilium-status button[type="submit"]:hover {
+  background: #1575c4;
+}
+.consilium-site .consilium-button:disabled,
+.consilium-status button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.consilium-header .consilium-start-button {
+  min-height: 42px;
+  padding: 7px 28px;
+  font-size: 18px;
+}
+.consilium-menu {
+  position: relative;
+}
+.consilium-menu summary {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  cursor: pointer;
+}
+.consilium-menu summary::-webkit-details-marker {
+  display: none;
+}
+.consilium-menu summary span {
+  width: 28px;
+  height: 2px;
+  background: #fff;
+}
+.consilium-menu > div {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  z-index: 10;
+  min-width: 230px;
+  background: #fff;
+  color: #06253e;
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: 0 10px 32px #0004;
+}
+.consilium-menu a {
+  display: block;
+  padding: 8px;
+  text-decoration: none;
+}
+.consilium-main {
+  width: min(1200px, calc(100% - 64px));
+  margin: auto;
+  min-height: 52vh;
+  padding: 24px 0 96px;
+}
+.consilium-invite-title {
+  color: #fff;
+  text-align: center;
+  font-family: var(--consilium-serif), Georgia, serif;
+  font-size: clamp(44px, 6vw, 80px);
+  font-weight: 600;
+  letter-spacing: -3px;
+  line-height: 1.05;
+  margin: 34px 0 64px;
+}
+.consilium-panel {
+  background: #fff;
+  border-radius: 30px;
+  padding: 40px;
+}
+.consilium-intro h1,
+.consilium-intro h2,
+.consilium-status h1 {
+  font-family: var(--consilium-serif), Georgia, serif;
+  font-size: 60px;
+  font-weight: 600;
+  letter-spacing: -3px;
+  line-height: 1.05;
+  margin: 0 0 26px;
+  text-align: inherit;
+}
+.consilium-intro p {
+  color: #7e8d94;
+  font-size: 20px;
+  line-height: 1.5;
+  margin: 0;
+}
+.consilium-intro a {
+  text-decoration: none;
+  border-bottom: 1px solid #9dc4da;
+}
+.consilium-full-panel {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: clamp(48px, 8vw, 150px);
+  padding-right: 72px;
+  background: #fff;
+  box-shadow: 0 80px 160px #217db666;
+}
+.consilium-full-panel .consilium-intro {
+  max-width: 420px;
+}
+.consilium-intro-logo {
+  display: block;
+  width: 160px;
+  height: auto;
+  margin-top: 30px;
+}
+.consilium-invite-panel {
+  padding: 56px 40px 68px;
+}
+.consilium-invite-panel .consilium-intro {
+  text-align: center;
+  margin: 0 auto 68px;
+}
+.consilium-invite-panel .consilium-intro p {
+  max-width: 900px;
+  margin: auto;
+}
+.consilium-invite-panel .consilium-form {
+  width: min(100%, 560px);
+  margin: auto;
+}
+.consilium-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.consilium-form [hidden] {
+  display: none !important;
+}
+.consilium-name-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+.consilium-two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+.consilium-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-bottom: 30px;
+}
+.consilium-label {
+  font-size: 18px;
+  line-height: 1.35;
+  margin-bottom: 22px;
+}
+.consilium-hint {
+  font-size: 12px;
+  color: #8c969b;
+  line-height: 1.5;
+  margin-top: -16px;
+  margin-bottom: 8px;
+}
+.consilium-form input:not([type="checkbox"]):not([type="file"]),
+.consilium-form select {
+  border: 0;
+  border-bottom: 1px solid #d5d5d5;
+  border-radius: 0;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 0 10px;
+  background-color: transparent;
+  color: #06253e;
+  box-shadow: none;
+  font-size: 16px;
+}
+.consilium-form input::placeholder {
+  color: #8b969c;
+  opacity: 1;
+  font-style: normal;
+}
+.consilium-form select {
+  appearance: none;
+  padding-right: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%23d5d5d5' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.consilium-first-step .consilium-field,
+.consilium-full-panel .consilium-form > fieldset > .consilium-two-columns .consilium-field {
+  margin-bottom: 12px;
+}
+.consilium-full-panel .consilium-two-columns:has(> div) {
+  display: block;
+}
+.consilium-upload input {
+  max-width: 100%;
+  padding: 12px 0;
+  font-size: 14px;
+}
+.consilium-upload input::file-selector-button {
+  border: 1px solid #d5d5d5;
+  color: #06253e;
+  border-radius: 30px;
+  background: #fff;
+  padding: 8px 14px;
+  margin-right: 12px;
+  cursor: pointer;
+  font: inherit;
+}
+.consilium-upload .consilium-hint:last-child {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+.consilium-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 28px;
+  cursor: pointer;
+}
+.consilium-consent input {
+  appearance: auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border-color: #d5d5d5;
+  accent-color: #2987d4;
+  flex-shrink: 0;
+}
+.consilium-consent a {
+  text-decoration: underline;
+}
+.consilium-submit-row {
+  text-align: center;
+  margin-top: 36px;
+}
+.consilium-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 28px;
+}
+.consilium-full-panel .consilium-button {
+  min-height: 46px;
+  font-size: 14px;
+  padding: 10px 30px;
+}
+.consilium-back {
+  background: transparent;
+  border: 0;
+  color: #647d8a;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.consilium-required {
+  text-align: center;
+  margin: 18px 0 0;
+  font-size: 12px;
+}
+.consilium-alternative {
+  font-size: 12px;
+  color: #72848e;
+  margin: 22px 0 0;
+  line-height: 1.7;
+}
+.consilium-invite-panel .consilium-alternative {
+  text-align: center;
+}
+.consilium-alternative a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.consilium-error {
+  border: 1px solid #edc3bd;
+  background: #fff5f3;
+  color: #87392e;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin: 10px 0 22px;
+  font-size: 15px;
+}
+.consilium-error a {
+  display: inline-block;
+  margin-top: 6px;
+  text-decoration: underline;
+}
+.consilium-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.consilium-status {
+  max-width: 640px;
+  margin: 40px auto 0;
+  padding: 42px;
+}
+.consilium-status h1 {
+  font-size: 46px;
+}
+.consilium-status h2 {
+  font-family: var(--consilium-serif), Georgia, serif;
+  font-size: 34px;
+  margin-bottom: 16px;
+}
+.consilium-status input {
+  color: #06253e !important;
+  background: #fff !important;
+}
+.consilium-status button {
+  cursor: pointer;
+}
+.consilium-status button[type="submit"] {
+  height: auto;
+  margin-top: 14px;
+  font-size: 18px;
+}
+.consilium-footer {
+  width: min(1200px, calc(100% - 64px));
+  margin: 0 auto;
+  padding-bottom: 40px;
+  color: #d5dee3;
+}
+.consilium-disclaimer {
+  text-align: center;
+  font-size: 14px;
+  opacity: 0.65;
+  margin: 0 auto 80px;
+  max-width: 620px;
+}
+.consilium-footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 42px;
+}
+.consilium-footer-top img {
+  width: 180px;
+  height: auto;
+}
+.consilium-footer-top a {
+  font-size: 18px;
+  text-decoration: none;
+}
+.consilium-footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 26px;
+  font-size: 12px;
+  opacity: 0.65;
+}
+.consilium-footer-legal span {
+  margin-left: auto;
+}
+@media (max-width: 960px) {
+  .consilium-full-panel {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    padding: 36px;
+  }
+  .consilium-intro h1,
+  .consilium-intro h2 {
+    font-size: 46px;
+    letter-spacing: -2px;
+  }
+  .consilium-invite-title {
+    font-size: 58px;
+  }
+}
+@media (max-width: 640px) {
+  .consilium-header,
+  .consilium-main,
+  .consilium-footer {
+    width: calc(100% - 32px);
+  }
+  .consilium-header {
+    height: 80px;
+    gap: 12px;
+  }
+  .consilium-header img {
+    width: 148px;
+  }
+  .consilium-header nav {
+    gap: 8px;
+  }
+  .consilium-login-button {
+    min-width: 0;
+    padding: 6px 18px;
+    font-size: 16px;
+  }
+  .consilium-header .consilium-start-button {
+    display: none;
+  }
+  .consilium-menu summary {
+    padding: 8px 0 8px 8px;
+  }
+  .consilium-menu summary span {
+    width: 22px;
+  }
+  .consilium-main {
+    padding: 12px 0 56px;
+  }
+  .consilium-panel,
+  .consilium-invite-panel {
+    border-radius: 24px;
+    padding: 28px 24px;
+  }
+  .consilium-full-panel {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .consilium-intro h1,
+  .consilium-intro h2,
+  .consilium-status h1 {
+    font-size: 40px;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+  }
+  .consilium-intro p {
+    font-size: 16px;
+  }
+  .consilium-intro-logo {
+    width: 130px;
+    margin-top: 22px;
+  }
+  .consilium-invite-title {
+    font-size: 42px;
+    letter-spacing: -1px;
+    margin: 22px 0 34px;
+  }
+  .consilium-invite-panel .consilium-intro {
+    margin-bottom: 34px;
+  }
+  .consilium-name-row,
+  .consilium-two-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .consilium-field {
+    margin-bottom: 26px;
+  }
+  .consilium-label {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+  .consilium-hint {
+    margin-top: -8px;
+  }
+  .consilium-consent {
+    font-size: 13px;
+    margin-bottom: 22px;
+  }
+  .consilium-alternative span {
+    display: none;
+  }
+  .consilium-alternative a {
+    display: block;
+  }
+  .consilium-submit-row {
+    margin-top: 24px;
+  }
+  .consilium-status {
+    margin-top: 12px;
+  }
+  .consilium-disclaimer {
+    margin-bottom: 42px;
+    font-size: 12px;
+  }
+  .consilium-footer-top,
+  .consilium-footer-legal {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .consilium-footer-legal span {
+    margin-left: 0;
+  }
+}

@@ -1,5 +1,4 @@
 import { ConsiliumRegistrationCheck } from "@/components/consilium-registration-check";
-import { DynamicTheme } from "@/components/dynamic-theme";
 import { consiliumRegistrationEnabled } from "@/lib/consilium-registration";
 import { notFound } from "next/navigation";
 export const dynamic = "force-dynamic";
@@ -12,11 +11,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   if (!consiliumRegistrationEnabled()) notFound();
   const params = await searchParams;
   return (
-    <DynamicTheme>
+    <section className="consilium-panel consilium-status">
       <div>
         <h1>Подтверждение почты</h1>
       </div>
       <ConsiliumRegistrationCheck link={{ id: Number(params.id), token: params.t ?? "" }} />
-    </DynamicTheme>
+    </section>
   );
 }

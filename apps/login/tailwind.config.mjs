@@ -1,4 +1,5 @@
 import colors from "tailwindcss/colors";
+import forms from "@tailwindcss/forms";
 
 // Generate dynamic theme colors
 let themeColors = {
@@ -193,5 +194,5 @@ export default {
       }),
     },
   },
-  plugins: [require("@tailwindcss/forms")],
+  plugins: [forms],
 };
