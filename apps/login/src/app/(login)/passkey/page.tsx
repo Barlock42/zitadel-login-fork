@@ -3,6 +3,7 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { LoginPasskey } from "@/components/login-passkey";
 import { Translated } from "@/components/translated";
 import { UserAvatar } from "@/components/user-avatar";
+import { consiliumEmailLoginEnabled } from "@/lib/consilium-email-login";
 import { getSessionCookieById } from "@/lib/cookies";
 import { getServiceConfig } from "@/lib/service-url";
 import { loadMostRecentSession } from "@/lib/session";
@@ -11,6 +12,7 @@ import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
+import Link from "next/link";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("passkey");
@@ -65,6 +67,10 @@ export default async function Page(props: { searchParams: Promise<Record<string 
     organization: organization ?? sessionFactors?.factors?.user?.organizationId ?? defaultOrganization,
   });
 
+  const emailCodeParams = new URLSearchParams({ loginName: loginName ?? "" });
+  if (requestId) emailCodeParams.set("requestId", requestId);
+  if (organization) emailCodeParams.set("organization", organization);
+
   return (
     <DynamicTheme branding={branding}>
       <div className="flex flex-col space-y-4">
@@ -103,6 +109,12 @@ export default async function Page(props: { searchParams: Promise<Record<string 
             altPassword={altPassword === "true"}
             organization={organization}
           />
+        )}
+
+        {consiliumEmailLoginEnabled() && loginName && (
+          <p className="ztdl-p mt-6">
+            Нет ключа на этом устройстве? <Link href={`/otp/email?${emailCodeParams}`}>Войти по коду из письма</Link>
+          </p>
         )}
       </div>
     </DynamicTheme>

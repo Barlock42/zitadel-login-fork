@@ -1,8 +1,10 @@
 import { Alert } from "@/components/alert";
+import { ConsiliumEmailCode } from "@/components/consilium-email-code";
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { LoginOTP } from "@/components/login-otp";
 import { Translated } from "@/components/translated";
 import { UserAvatar } from "@/components/user-avatar";
+import { consiliumEmailLoginEnabled } from "@/lib/consilium-email-login";
 import { getSessionCookieById } from "@/lib/cookies";
 import { getPublicHost } from "@/lib/server/host";
 import { getServiceConfig } from "@/lib/service-url";
@@ -66,6 +68,36 @@ export default async function Page(props: {
     serviceConfig,
     organization: organization ?? session?.factors?.user?.organizationId,
   });
+
+  if (consiliumEmailLoginEnabled() && method === "email") {
+    return (
+      <DynamicTheme branding={branding}>
+        <div className="flex flex-col space-y-4">
+          <h1>Код из письма</h1>
+          {session && (
+            <UserAvatar
+              loginName={loginName ?? session.factors?.user?.loginName}
+              displayName={session.factors?.user?.displayName}
+              showDropdown
+              searchParams={searchParams}
+            ></UserAvatar>
+          )}
+        </div>
+        <div className="w-full">
+          {session ? (
+            <ConsiliumEmailCode
+              sessionId={session.id}
+              loginName={loginName ?? session.factors?.user?.loginName}
+              requestId={requestId}
+              organization={organization ?? session.factors?.user?.organizationId}
+            />
+          ) : (
+            <Alert>Сеанс входа устарел. Введите почту ещё раз.</Alert>
+          )}
+        </div>
+      </DynamicTheme>
+    );
+  }
 
   return (
     <DynamicTheme branding={branding}>

@@ -237,6 +237,66 @@ describe("sendLoginname", () => {
       expect((result as any).redirect).toContain("requestId=req123");
     });
 
+    describe("Consilium email login", () => {
+      const verifiedUser = {
+        ...mockUser,
+        type: { case: "human", value: { email: { email: "user@example.com", isVerified: true } } },
+      };
+
+      beforeEach(() => {
+        vi.stubEnv("CONSILIUM_EMAIL_LOGIN", "true");
+        mockSearchUsers.mockResolvedValue({ result: [verifiedUser] });
+        mockCreateSessionAndUpdateCookie.mockResolvedValue({
+          session: { ...mockSession, id: "session123" },
+          sessionCookie: {},
+        });
+      });
+
+      afterEach(() => {
+        vi.unstubAllEnvs();
+      });
+
+      test("sends a password user to the email code instead of the password", async () => {
+        mockListAuthenticationMethodTypes.mockResolvedValue({ authMethodTypes: [AuthenticationMethodType.PASSWORD] });
+
+        const result = await sendLoginname({ loginName: "user@example.com", requestId: "req123", organization: "org123" });
+
+        expect((result as any).redirect).toMatch(/^\/otp\/email\?/);
+        expect((result as any).redirect).toContain("sessionId=session123");
+        expect((result as any).redirect).toContain("requestId=req123");
+        expect((result as any).redirect).toContain("organization=org123");
+      });
+
+      test("sends a verified user without methods to the email code", async () => {
+        mockListAuthenticationMethodTypes.mockResolvedValue({ authMethodTypes: [] });
+
+        const result = await sendLoginname({ loginName: "user@example.com" });
+
+        expect((result as any).redirect).toMatch(/^\/otp\/email\?/);
+      });
+
+      test("offers the passkey first without a password alternative", async () => {
+        mockListAuthenticationMethodTypes.mockResolvedValue({
+          authMethodTypes: [AuthenticationMethodType.PASSKEY, AuthenticationMethodType.PASSWORD],
+        });
+
+        const result = await sendLoginname({ loginName: "user@example.com", requestId: "req123" });
+
+        expect((result as any).redirect).toMatch(/^\/passkey\?/);
+        expect((result as any).redirect).not.toContain("altPassword");
+        expect((result as any).redirect).toContain("requestId=req123");
+      });
+
+      test("keeps the invite flow for an unverified email", async () => {
+        mockSearchUsers.mockResolvedValue({ result: [mockUser] });
+        mockListAuthenticationMethodTypes.mockResolvedValue({ authMethodTypes: [] });
+
+        const result = await sendLoginname({ loginName: "user@example.com" });
+
+        expect((result as any).redirect).toMatch(/^\/verify\?/);
+      });
+    });
+
     describe("Single authentication method", () => {
       test("should redirect to password when user has only password method and it's allowed", async () => {
         mockListAuthenticationMethodTypes.mockResolvedValue({

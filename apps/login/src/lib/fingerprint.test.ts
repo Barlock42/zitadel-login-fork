@@ -76,6 +76,8 @@ describe("fingerprint", () => {
         value: fingerprintId,
         httpOnly: true,
         path: "/",
+        sameSite: "lax",
+        secure: false,
         maxAge: 31536000,
       });
     });
@@ -224,6 +226,8 @@ describe("fingerprint", () => {
         value: newUuid,
         httpOnly: true,
         path: "/",
+        sameSite: "lax",
+        secure: false,
         maxAge: 31536000,
       });
     });
