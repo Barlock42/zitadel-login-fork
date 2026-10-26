@@ -7,6 +7,7 @@ import { ChecksSchema } from "@zitadel/proto/zitadel/session/v2/session_service_
 import { AuthenticationMethodType } from "@zitadel/proto/zitadel/user/v2/user_service_pb";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
+import { consiliumEmailLoginEnabled } from "../consilium-email-login";
 import { idpTypeToIdentityProviderType, idpTypeToSlug } from "../idp";
 
 import { PasskeysType } from "@zitadel/proto/zitadel/settings/v2/login_settings_pb";
@@ -330,6 +331,16 @@ export async function sendLoginname(command: SendLoginnameCommand) {
       serviceConfig,
       userId: session?.factors?.user?.id ?? userId,
     });
+
+    // Consilium has no passwords: a passkey goes first, otherwise a code from the email.
+    if (consiliumEmailLoginEnabled() && humanUser?.email?.isVerified && session?.id) {
+      const params = new URLSearchParams({ loginName: session.factors?.user?.loginName ?? user.preferredLoginName });
+      if (command.requestId) params.append("requestId", command.requestId);
+      if (organization) params.append("organization", organization);
+      if (methods.authMethodTypes.includes(AuthenticationMethodType.PASSKEY)) return { redirect: "/passkey?" + params };
+      params.append("sessionId", session.id);
+      return { redirect: "/otp/email?" + params };
+    }
 
     const hasPrimaryMethod =
       methods.authMethodTypes?.some(

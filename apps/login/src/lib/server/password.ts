@@ -24,6 +24,7 @@ import { SetPasswordRequestSchema } from "@zitadel/proto/zitadel/user/v2/user_se
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { completeFlowOrGetUrl } from "../client";
+import { consiliumEmailLoginEnabled } from "../consilium-email-login";
 import { getSessionCookieById, getSessionCookieByLoginName } from "../cookies";
 import { getServiceConfig } from "../service-url";
 import {
@@ -142,6 +143,10 @@ export async function sendPassword(
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
   const t = await getTranslations("password");
+
+  if (consiliumEmailLoginEnabled()) {
+    return { error: "Вход по паролю отключён. Войдите по коду из письма." };
+  }
 
   recordAuthAttempt("password", command.organization);
 

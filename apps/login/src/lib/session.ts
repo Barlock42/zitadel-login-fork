@@ -4,6 +4,7 @@ import { SAMLRequest } from "@zitadel/proto/zitadel/saml/v2/authorization_pb";
 import { Session } from "@zitadel/proto/zitadel/session/v2/session_pb";
 import { GetSessionResponse } from "@zitadel/proto/zitadel/session/v2/session_service_pb";
 import { AuthenticationMethodType } from "@zitadel/proto/zitadel/user/v2/user_service_pb";
+import { emailCodeVerifiedAt } from "./consilium-email-login";
 import { getMostRecentCookieWithLoginname } from "./cookies";
 import { shouldEnforceMFA } from "./verify-helper";
 import { getLoginSettings, getSession, getUserByID, listAuthenticationMethodTypes, ServiceConfig } from "./zitadel";
@@ -56,6 +57,7 @@ export async function isSessionValid({
   const validIDP = session?.factors?.intent?.verifiedAt;
   const validPassword = session?.factors?.password?.verifiedAt;
   const validPasskey = session?.factors?.webAuthN?.verifiedAt;
+  const validEmailCode = emailCodeVerifiedAt(session?.factors);
 
   // Get login settings to determine if MFA is actually required by policy
   const loginSettings = await getLoginSettings({ serviceConfig, organization: session.factors?.user?.organizationId });
@@ -111,7 +113,7 @@ export async function isSessionValid({
     return false;
   }
 
-  const validChecks = !!(validPassword || validPasskey || validIDP);
+  const validChecks = !!(validPassword || validPasskey || validIDP || validEmailCode);
 
   if (!validChecks) {
     return false;

@@ -31,6 +31,7 @@ const nextConfig = {
     // Add React 19 compatibility optimizations
     optimizePackageImports: ["@radix-ui/react-tooltip", "@heroicons/react"],
     serverActions: {
+      bodySizeLimit: "12mb",
       ...(process.env.SERVER_ACTION_ALLOWED_ORIGINS
         ? { allowedOrigins: process.env.SERVER_ACTION_ALLOWED_ORIGINS.split(",").map((o) => o.trim()) }
         : {}),

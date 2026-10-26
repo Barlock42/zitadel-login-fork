@@ -2,12 +2,14 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { SignInWithIdp } from "@/components/sign-in-with-idp";
 import { Translated } from "@/components/translated";
 import { UsernameForm } from "@/components/username-form";
+import { consiliumRegistrationEnabled, registrationAttribution } from "@/lib/consilium-registration";
 import { getServiceConfig } from "@/lib/service-url";
 import { getActiveIdentityProviders, getBrandingSettings, getDefaultOrg, getLoginSettings } from "@/lib/zitadel";
 import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
+import Link from "next/link";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("loginname");
@@ -58,16 +60,37 @@ export default async function Page(props: { searchParams: Promise<Record<string 
 
       <div className="w-full">
         {loginSettings?.allowLocalAuthentication && (
-          <UsernameForm
-            loginName={loginName}
-            requestId={requestId}
-            organization={organization} // stick to "organization" as we still want to do user discovery based on the searchParams not the default organization, later the organization is determined by the found user
-            defaultOrganization={defaultOrganization}
-            loginSettings={loginSettings}
-            suffix={suffix}
-            submit={submit}
-            allowRegister={!!loginSettings?.allowRegister}
-          ></UsernameForm>
+          <>
+            <UsernameForm
+              loginName={loginName}
+              requestId={requestId}
+              organization={organization} // stick to "organization" as we still want to do user discovery based on the searchParams not the default organization, later the organization is determined by the found user
+              defaultOrganization={defaultOrganization}
+              loginSettings={loginSettings}
+              suffix={suffix}
+              submit={submit}
+              allowRegister={!!loginSettings?.allowRegister}
+            ></UsernameForm>
+            {consiliumRegistrationEnabled() && (
+              <p className="mt-4 text-sm">
+                Впервые в Consilium?{" "}
+                <Link
+                  className="underline"
+                  data-testid="consilium-register-link"
+                  href={
+                    "/registration?" +
+                    new URLSearchParams({
+                      ...registrationAttribution(searchParams),
+                      ...(requestId ? { requestId } : {}),
+                      ...(organization ? { organization } : {}),
+                    })
+                  }
+                >
+                  Зарегистрироваться
+                </Link>
+              </p>
+            )}
+          </>
         )}
 
         {loginSettings?.allowExternalIdp && !!identityProviders?.length && (

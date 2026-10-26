@@ -21,6 +21,7 @@ import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { userAgent } from "next/server";
 import { completeFlowOrGetUrl } from "../client";
+import { emailCodeVerifiedAt } from "../consilium-email-login";
 import { assertConsiliumUserScope } from "../consilium-scope";
 import { getSessionCookieById } from "../cookies";
 import { getServiceConfig } from "../service-url";
@@ -53,10 +54,11 @@ function isSessionValid(session: Partial<Session>): {
   const validPassword = session?.factors?.password?.verifiedAt;
   const validPasskey = session?.factors?.webAuthN?.verifiedAt;
   const validIDP = session?.factors?.intent?.verifiedAt;
+  const validEmailCode = emailCodeVerifiedAt(session?.factors);
   const stillValid = session.expirationDate ? timestampDate(session.expirationDate) > new Date() : true;
 
-  const verifiedAt = validPassword || validPasskey || validIDP;
-  const valid = !!((validPassword || validPasskey || validIDP) && stillValid);
+  const verifiedAt = validPassword || validPasskey || validIDP || validEmailCode;
+  const valid = !!(verifiedAt && stillValid);
 
   return { valid, verifiedAt };
 }

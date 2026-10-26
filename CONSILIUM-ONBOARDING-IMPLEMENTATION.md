@@ -13,3 +13,26 @@ Cookies canary отделены префиксом и путём. Server-side gu
 Проверено: 82 теста в шести файлах, Docker build с TypeScript-проверкой и Prettier изменённых файлов. Полный lint сообщает ранее существовавшие нарушения форматирования в `client-utils.test.ts`, `idp-intent.test.ts`, `idp-intent.ts`. На тестовом портале пройдены первый вход для обоих состояний почты, повторное использование обоих видов сеанса, вход после очистки сеансов, отмена/повтор, восстановление и выход.
 
 Измерения выполнялись в Windows/Chrome с virtual WebAuthn authenticator. Реальные Windows Hello, iPhone/Safari, Android/Chrome и native application callback требуют отдельной проверки перед production. Подробный отчёт и откат: `pharmgpt/infra-k8s`, `selectel/ozon-doctors-test/ONBOARDING.md`, ветка `codex/consilium-passkey-staging`.
+
+## Вход по коду и ссылке из письма
+
+Включается `CONSILIUM_EMAIL_LOGIN=true`; нужны `CONSILIUM_LINKER_URL` (внутренний адрес linker), `CONSILIUM_LINKER_SECRET` (не короче 32 символов, совпадает с `LoginCode:Secret` linker) и `LOGIN_VERIFICATION_SECRET`. `CONSILIUM_EMAIL_CODE_TTL_MINUTES` (по умолчанию 5) должен совпадать со сроком генератора `OTPEmail` ZITADEL: он задаёт текст письма и срок ссылки, но не меняет сам код.
+
+После ввода почты пользователь с ключом попадает на проверку ключа, где есть «Войти по коду из письма». Остальные с подтверждённой почтой сразу получают код; пароль не предлагается, `sendPassword` отклоняется. Код создаёт ZITADEL (`otpEmail.returnCode`), письмо с кодом и кнопкой отправляет linker. При необходимости OTP Email добавляется пользователю автоматически. В этом режиме подтверждённый код считается первым фактором: backend ZITADEL это допускает, upstream Login V2 — нет.
+
+Ссылка содержит зашифрованные AES-GCM session ID и код, поэтому код не попадает в access-логи. Если она открыта в том же браузере, вход подтверждается там же, а исходная вкладка продолжает сама: она опрашивает сеанс раз в 3 с. В другом браузере или на другом устройстве страница только показывает код для ввода на исходном устройстве: клик по ссылке не может впустить чужое устройство. Повторная отправка возможна не раньше чем через 60 с; перезагрузка страницы не отправляет новое письмо. Linker дополнительно ограничивает число писем на адрес.
+
+После входа по коду устройству без ключа один раз предлагается создать ключ; «Не сейчас» запоминается на устройстве на 180 дней. Если встроенного аутентификатора нет (`isUserVerifyingPlatformAuthenticatorAvailable`), предложение пропускается, чтобы браузер не запрашивал телефон через QR-код.
+
+## Регистрация на auth (этап 2)
+
+`CONSILIUM_REGISTRATION=true` вместе с флагами email login и Consilium onboarding включает `/registration`, `/registration/check`, `/registration/confirm`. На входе появляется ссылка «Зарегистрироваться». Встроенная self-registration ZITADEL остаётся выключенной. Маршруты динамические: feature flags и организация читаются при запросе, а не при сборке.
+
+Форма передаётся серверным action в приватный API linker с серверным секретом. Browser secret хранится только в HttpOnly cookie в canary path; в браузерный bundle серверные credentials не попадают. GET не подтверждает почту и не создаёт пользователя. Подтверждение ссылки — явная кнопка; bearer token удаляется из адресной строки после загрузки. Исходная вкладка опрашивает регистрацию. Подтверждение на другом устройстве подтверждает только почту: для входа на исходном устройстве вводится код. В том же браузере ссылка продолжает вход автоматически.
+
+После подтверждения и автоодобрения Login проверяет scope, verified email и новый registration user ID, затем обменивает подтверждение linker на штатный ZITADEL email OTP check без второго письма. Cookie регистрации удаляется после consume; существующие аккаунты этим путём не авторизуются. Далее используется проверенный этапом 1 flow с необязательным Passkey и штатным OIDC callback.
+
+Форма собирает пять UTM из query и сохраняет первый источник на время регистрации в sessionStorage. Для перехода с лендинга метки должны быть добавлены к ссылке `/registration`; захват referrer и landing URL сам по себе не переносит query другого origin. Пример подключения лендинга и тестовые команды — runbook infra. Legal links берутся из настроек тестовой организации ZITADEL. Загрузка ограничена 10 МБ в UI/linker, транспорт server action — 12 МБ.
+
+### Tilda form presentation (23 October 2026)
+`/registration` now follows the current two-step main-site form (name/email, then region/specialties/document); `/invite` follows the single-page invitation-code form. Both use a separate root layout with the site logos, PT Sans / Cormorant Garamond, navy background and white panels. Region and specialty lists are a versioned copy of the public Tilda options; no Tilda scripts, form services or analytics execute. Legal links point to the current Consilium terms, consent and privacy pages. The first-step duplicate check is read-only and rate-limited by linker; final submit remains authoritative. Additional specialty values are allowlisted and forwarded to linker. Existing verification/session actions, cookie scope, optional Passkey and UTM attribution are retained.

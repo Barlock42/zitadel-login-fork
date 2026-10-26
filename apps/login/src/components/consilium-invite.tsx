@@ -86,7 +86,11 @@ export function ConsiliumInvite(props: { userId: string; organization: string; c
         Уже зарегистрированы? Войти
       </a>
       <p>
-        Ссылка устарела или ключ потерян? <a href="mailto:help@consiliumalterum.ru">Напишите в поддержку</a>.
+        Не получается создать ключ?{" "}
+        <a href={process.env.NEXT_PUBLIC_CONSILIUM_PORTAL_URL || "https://app.consiliumalterum.ru"}>
+          Войдите по коду из письма
+        </a>
+        .
       </p>
     </div>
   );
